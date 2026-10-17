@@ -1,7 +1,8 @@
 <!doctype html>
-<html lang="tg">
+<html lang="tg" translate="no">
 <head>
 <meta charset="utf-8">
+<meta name="google" content="notranslate">
 <title>Даъватнома · Оши нахор · Парвинахон ва Акмалҷон</title>
 <meta property="og:title" content="Даъватнома · Оши нахор">
 <meta property="og:description" content="Парвинахон ва Акмалҷон · 7 ноябри 2026 · Тарабхонаи «Шоҳон», ноҳияи Зафаробод">
@@ -201,7 +202,7 @@ body {
   100% { transform: scale(1.35); opacity: 0; }
 }
 .envelope.open .env-flap { transform: rotateX(180deg); z-index: 0; }
-.envelope.open .env-letter { transform: translateY(-46%); }
+.envelope.open .env-letter { transform: translateY(-58%); }
 
 /* ---------- Page ---------- */
 .page { max-width: 560px; margin: 0 auto; padding-block: 40px 48px; }
@@ -380,17 +381,13 @@ body {
   .dateblock .day { font-size: 4.6rem; }
 }
 
+/* With reduced motion only the decorative loops stop. The envelope opening plays for everyone:
+   the guest starts it with a tap, and it is the invitation itself. */
 @media (prefers-reduced-motion: reduce) {
   .intro:not(.opened) .seal, .cue svg { animation: none; }
-  .envelope.open .seal { animation: fade-out .7s ease forwards; }
-  .env-flap { transition: opacity .9s ease .5s, z-index 0s linear 1s; }
-  .envelope.open .env-flap { transform: none; opacity: 0; }
-  .envelope.open .env-letter { transform: none; }
-  .intro.leaving { transform: none; }
   .revealed .hero > * { animation-name: fade-in; }
   .sound.playing::after { animation: none; }
 }
-@keyframes fade-out { to { opacity: 0; } }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 
 /* Music toggle */
