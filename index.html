@@ -98,7 +98,7 @@ body {
     radial-gradient(90% 55% at 50% 100%, rgba(233,165,109,.22), transparent 65%),
     radial-gradient(70% 50% at 50% 40%, rgba(26,44,99,.9), transparent 70%);
   text-align: center;
-  transition: opacity .7s ease, transform .7s ease;
+  transition: opacity 1s ease, transform 1s ease;
 }
 .intro.leaving { opacity: 0; transform: translateY(-3%); pointer-events: none; }
 .intro .label { color: var(--gold); }
@@ -113,6 +113,7 @@ body {
 .intro-names { margin: -.5rem 0 .2rem; font-style: italic; font-weight: 600; font-size: clamp(1.3rem, 5.6vw, 1.6rem); color: var(--gold); }
 .intro-names i { font-weight: 500; color: rgba(243,244,248,.7); }
 .intro-hint { margin: 0; font-style: italic; font-size: 1.1rem; color: rgba(243,244,248,.75); }
+.intro.opened .intro-hint { opacity: 0; transition: opacity .5s ease; }
 
 .envelope {
   position: relative;
@@ -142,7 +143,7 @@ body {
   border-radius: 3px;
   box-shadow: inset 0 0 0 5px #fbfbfd, inset 0 0 0 6px rgba(26,38,84,.25);
   color: var(--ink);
-  transition: transform .8s cubic-bezier(.2,.7,.2,1) .55s;
+  transition: transform 1.2s cubic-bezier(.2,.7,.2,1) 1.45s;
 }
 .env-letter .label { color: var(--gold-ink); font-size: .6rem; }
 .env-letter strong { font-style: italic; font-weight: 600; font-size: 1.6rem; line-height: 1; }
@@ -163,14 +164,13 @@ body {
   clip-path: polygon(0 0, 100% 0, 50% 100%);
   border-radius: 6px 6px 0 0;
   transform-origin: top center;
-  transition: transform .75s cubic-bezier(.5,0,.2,1), z-index 0s linear .38s;
+  transition: transform 1.1s cubic-bezier(.45,0,.25,1) .5s, z-index 0s linear 1.05s;
 }
 .seal {
   position: absolute; left: 50%; top: 58%; z-index: 4;
   width: clamp(56px, 18vw, 76px); aspect-ratio: 1;
   translate: -50% -50%;
   display: grid; place-items: center;
-  transition: transform .35s ease, opacity .35s ease;
 }
 .seal::before {
   content: "";
@@ -194,7 +194,12 @@ body {
 .intro:not(.opened) .seal { animation: pulse 2.4s ease-in-out infinite; }
 @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.07); } }
 
-.envelope.open .seal { transform: scale(.4); opacity: 0; animation: none; }
+.envelope.open .seal { animation: seal-break .75s cubic-bezier(.3,0,.2,1) forwards; }
+@keyframes seal-break {
+  0% { transform: scale(1); opacity: 1; }
+  30% { transform: scale(.86); opacity: 1; }
+  100% { transform: scale(1.35); opacity: 0; }
+}
 .envelope.open .env-flap { transform: rotateX(180deg); z-index: 0; }
 .envelope.open .env-letter { transform: translateY(-46%); }
 
@@ -376,8 +381,45 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .intro:not(.opened) .seal, .cue svg { animation: none; }
+  .envelope.open .seal { animation: fade-out .7s ease forwards; }
+  .env-flap { transition: opacity .9s ease .5s, z-index 0s linear 1s; }
+  .envelope.open .env-flap { transform: none; opacity: 0; }
+  .envelope.open .env-letter { transform: none; }
+  .intro.leaving { transform: none; }
+  .revealed .hero > * { animation-name: fade-in; }
+  .sound.playing::after { animation: none; }
 }
+@keyframes fade-out { to { opacity: 0; } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* Music toggle */
+.sound {
+  position: fixed; z-index: 30;
+  right: calc(16px + env(safe-area-inset-right, 0px));
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  width: 48px; height: 48px;
+  display: grid; place-items: center;
+  border: 1px solid rgba(211,173,98,.6);
+  border-radius: 50%;
+  background: rgba(14,25,55,.86);
+  color: var(--gold);
+  cursor: pointer;
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  box-shadow: 0 8px 20px rgba(0,0,0,.35);
+  -webkit-tap-highlight-color: transparent;
+}
+.sound svg { width: 22px; height: 22px; }
+.sound .icon-off { display: none; }
+.sound[aria-pressed="false"] .icon-on { display: none; }
+.sound[aria-pressed="false"] .icon-off { display: block; }
+.sound:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+.sound.playing::after {
+  content: ""; position: absolute; inset: -1px; border-radius: 50%;
+  border: 1px solid rgba(211,173,98,.6);
+  animation: ripple 2.4s ease-out infinite;
+}
+@keyframes ripple { from { transform: scale(1); opacity: .9; } to { transform: scale(1.6); opacity: 0; } }
 </style>
 </head>
 <body>
@@ -415,6 +457,11 @@ body {
   </button>
   <p class="intro-hint">Барои кушодан мӯҳрро пахш кунед</p>
 </div>
+
+<button class="sound" id="sound" type="button" aria-label="Мусиқӣ" aria-pressed="true" hidden>
+  <svg class="icon-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6M18.2 6.5a7.8 7.8 0 0 1 0 11"/></svg>
+  <svg class="icon-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></svg>
+</button>
 
 <main class="page" id="page">
   <header class="hero">
@@ -544,19 +591,70 @@ body {
   var timer = setInterval(tick, 1000);
   tick();
 
-  /* Envelope */
+  /* Music: loads only after the guest taps the seal */
+  var MUSIC_SRC = "music.mp3";
+  var sound = document.getElementById("sound");
+  var audio = null, fadeTimer = null, resumeOnShow = false;
+
+  function setPlaying(on) {
+    sound.setAttribute("aria-pressed", on ? "true" : "false");
+    sound.classList.toggle("playing", on);
+  }
+  function fadeTo(target) {
+    clearInterval(fadeTimer);
+    fadeTimer = setInterval(function () {
+      if (!audio) { clearInterval(fadeTimer); return; }
+      var v = audio.volume, step = 0.03;
+      v = target > v ? Math.min(target, v + step) : Math.max(target, v - step);
+      try { audio.volume = v; } catch (e) {}
+      if (v === target) clearInterval(fadeTimer);
+    }, 90);
+  }
+  function startMusic() {
+    try {
+      audio = new Audio(MUSIC_SRC);
+      audio.loop = true;
+      try { audio.volume = 0; } catch (e) {}
+      audio.addEventListener("error", function () { sound.hidden = true; audio = null; });
+      var p = audio.play();
+      if (p && p.then) {
+        p.then(function () { sound.hidden = false; setPlaying(true); fadeTo(0.6); })
+         .catch(function () { if (audio) { sound.hidden = false; setPlaying(false); } });
+      }
+    } catch (e) { audio = null; }
+  }
+  sound.addEventListener("click", function () {
+    if (!audio) return;
+    if (audio.paused) {
+      var p = audio.play();
+      if (p && p.then) p.then(function () { setPlaying(true); fadeTo(0.6); }).catch(function () {});
+    } else {
+      audio.pause();
+      setPlaying(false);
+    }
+  });
+  document.addEventListener("visibilitychange", function () {
+    if (!audio) return;
+    if (document.hidden && !audio.paused) { audio.pause(); resumeOnShow = true; }
+    else if (!document.hidden && resumeOnShow) {
+      resumeOnShow = false;
+      var p = audio.play();
+      if (p && p.catch) p.catch(function () { setPlaying(false); });
+    }
+  });
+
+  /* Envelope: seal breaks, flap opens, letter rises, then the page */
   var intro = document.getElementById("intro");
   var envelope = document.getElementById("envelope");
   var root = document.documentElement;
   var opened = false;
-  var reduce = false;
-  try { reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
 
   root.classList.add("locked");
 
   function openLetter() {
     if (opened) return;
     opened = true;
+    startMusic();
     intro.classList.add("opened");
     envelope.classList.add("open");
     setTimeout(function () {
@@ -566,8 +664,8 @@ body {
         intro.hidden = true;
         root.classList.remove("locked");
         window.scrollTo(0, 0);
-      }, reduce ? 0 : 700);
-    }, reduce ? 0 : 1650);
+      }, 1000);
+    }, 3100);
   }
   envelope.addEventListener("click", openLetter);
   intro.addEventListener("click", function (e) { if (e.target === intro) openLetter(); });
